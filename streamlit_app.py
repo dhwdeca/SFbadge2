@@ -10,11 +10,17 @@ def get_fruityvice_data(this_fruit_choice):
     # normalize the json data
     fruityvice_normalized = pandas.json_normalize(fruityvice_response.json())
     return fruityvice_normalized
+
 #snowflake functions
 def get_fruit_load_list():
     with my_cnx.cursor() as my_cur:
         my_cur.execute("SELECT * FROM fruit_load_list")
         return my_cur.fetchall()
+
+def insert_row_snowflake(fruit_to_add):
+    with my_cnx.cursor() as my_cur:
+        my_cur.execute("INSERT INTO fruit_load_list VALUES ('" + fruit_to_add + "')")
+        return "thank you for adding " + fruit_to_add
 
 # fetching data
 my_fruit_list = pandas.read_csv("https://uni-lab-files.s3.us-west-2.amazonaws.com/dabw/fruit_macros.txt")
@@ -55,6 +61,9 @@ if streamlit.button('Fetch the fruit load list from Snowflake'):
     streamlit.write("The fruit load list contains:")
     streamlit.dataframe(my_data_rows)
 
-streamlit.stop()
+
 add_my_fruit = streamlit.text_input('What fruit would you like to add?','')
-my_cur.execute("INSERT INTO fruit_load_list VALUES ('" + add_my_fruit + "')")
+if streamlit.button('add fruit to load list'):
+    my_cnx = snowflake.connector.connect(**streamlit.secrets["snowflake"])
+    back_from_function = insert_row_snowflake(add_my_fruit)
+    streamlit.text(back_from_function)
